@@ -3,25 +3,22 @@ import json
 import pandas as pd
 import numpy as np
 import json
-import datetime
-from datetime import date
+import datetime as dt
+from datetime import datetime
 import boto3
 
 root_url = 'https://api.binance.com/api/v3/klines' # endpoint of binance to get the price for the currencies
 
-today = date.today()
-
 
 def get_price(symbol, interval = '1h'):
+   today = datetime.now()
+   start_date = today - dt.timedelta(hours=23)
    
-   end_date = datetime.datetime.strptime(str(today), '%Y-%m-%d') 
-   start_date = end_date - datetime.timedelta(hours=23)
-
    # the binance api takes server time as input but since we're looking for daily price and we can't specify
    # that in servertime format, we convert the timestamp of 23 hours back from not into server time and pass
    # it inside url in addition to the currency exchange symbol and the interval we want 1h for this case
    start_time = int(start_date.timestamp() * 1000)
-   end_time = int(end_date.timestamp() * 1000)
+   end_time = int(today.timestamp() * 1000)
    url = root_url+'?symbol='+symbol+'&interval='+interval+'&startTime='+str(start_time)+'&endTime='+str(end_time)
 
    data = json.loads(requests.get(url).text)
@@ -31,7 +28,7 @@ def get_price(symbol, interval = '1h'):
                  'close_time', 'qav', 'num_trades',
                  'taker_base_vol', 'taker_quote_vol', 'ignore']
     # the servertime is then converted to datetime so as to return the values in understandable form
-   df.index = [datetime.datetime.fromtimestamp(x/1000.0) for x in df.close_time]
+   df.index = [datetime.fromtimestamp(x/1000.0) for x in df.close_time]
    return df
 
 
